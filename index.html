@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Report a YouTuber — Draft & Send</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#7c3aed;--muted:#94a3b8;--glass:rgba(255,255,255,0.03)}
+    html,body{height:100%;margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    body{background:linear-gradient(180deg,#071024 0%, #061426 60%);color:#e6eef8;display:flex;align-items:center;justify-content:center;padding:24px}
+    .container{max-width:980px;width:100%;background:var(--card);border-radius:12px;padding:22px;box-shadow:0 6px 30px rgba(2,6,23,0.6)}
+    h1{margin:0 0 6px;font-size:20px}
+    p.lead{margin:0 0 18px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    label{display:block;font-size:13px;margin-bottom:6px;color:#dbeafe}
+    input[type=text],input[type=email],select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #10304a;background:var(--glass);color:inherit;font-size:14px}
+    textarea{min-height:120px;resize:vertical}
+    .field{margin-bottom:12px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    button{background:linear-gradient(90deg,var(--accent),#5b21b6);border:0;padding:10px 12px;border-radius:8px;color:white;cursor:pointer}
+    button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .preview{background:linear-gradient(180deg,#051225, #061427);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;font-size:13px;color:#cfe8ff;white-space:pre-wrap}
+    .notes{font-size:13px;color:var(--muted);margin-top:8px}
+    .small{font-size:12px;color:var(--muted)}
+    .right-card{padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent)}
+    .link{color:#9be3ff;text-decoration:underline}
+    footer{margin-top:12px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Report a YouTuber — Draft & Send</h1>
+    <p class="lead">Fill this form to create a formal message you can send to YouTube or save for your records. This page does <strong>not</strong> automatically submit reports to YouTube — it helps you prepare a clear, well-structured letter and open it in your email client.</p>
+
+    <div class="grid">
+      <div>
+        <div class="field">
+          <label for="yourName">Your name</label>
+          <input id="yourName" type="text" placeholder="Full name (optional)" />
+        </div>
+
+        <div class="field">
+          <label for="yourEmail">Your email</label>
+          <input id="yourEmail" type="email" placeholder="you@example.com (optional — for replies)" />
+        </div>
+
+        <div class="field">
+          <label for="channel">Channel / Creator (target)</label>
+          <input id="channel" type="text" value="@weareeramusicbv" />
+        </div>
+
+        <div class="field">
+          <label for="type">Type of complaint</label>
+          <select id="type">
+            <option value="copyright">Copyright infringement</option>
+            <option value="harassment">Harassment or hateful content</option>
+            <option value="privacy">Privacy violation / doxxing</option>
+            <option value="misinfo">Misinformation</option>
+            <option value="other">Other (explain in details)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="description">Describe the issue (include timestamps / video links / evidence)</label>
+          <textarea id="description" placeholder="Describe exactly what happened, why it violates policy, and paste supporting links (e.g. https://youtube.com/...) "></textarea>
+        </div>
+
+        <div class="field">
+          <label for="desiredOutcome">What would you like YouTube to do?</label>
+          <input id="desiredOutcome" type="text" placeholder="e.g. remove the video, warn the channel, take down account" />
+        </div>
+
+        <div class="actions">
+          <button id="generate">Generate letter</button>
+          <button class="secondary" id="copy">Copy to clipboard</button>
+          <button class="secondary" id="download">Download as .txt</button>
+        </div>
+
+        <div class="notes">Recommended: Also submit this via YouTube's official report form for the relevant video/channel. <a class="link" href="https://support.google.com/youtube/answer/2802027" target="_blank">Open YouTube report help</a></div>
+      </div>
+
+      <aside class="right-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <strong>Letter preview</strong>
+          <span class="small">Ready to open in your email client</span>
+        </div>
+        <div id="preview" class="preview">Fill the form and click "Generate letter" to see a preview here.</div>
+
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <button id="openMail">Open in Email Client</button>
+          <button class="secondary" id="gotoReport">Go to YouTube report</button>
+        </div>
+
+        <div class="notes">Privacy: This page runs fully in your browser. Nothing is sent to any server unless you click your email client to send the message. Use responsibly and avoid false accusations.</div>
+      </aside>
+    </div>
+
+    <footer>
+      <strong>Note:</strong> This tool helps craft and format a message. YouTube processes reports only through official channels — use the built-in "Report" button on YouTube videos or the web report forms. This site does not impersonate you or bypass YouTube systems.
+    </footer>
+  </div>
+
+<script>
+function escapeForMailto(s){
+  return encodeURIComponent(s).replace(/'/g, "%27").replace(/\(/g,"%28").replace(/\)/g,"%29");
+}
+
+function buildLetter(){
+  const yourName = document.getElementById('yourName').value.trim();
+  const yourEmail = document.getElementById('yourEmail').value.trim();
+  const channel = document.getElementById('channel').value.trim() || '@weareeramusicbv';
+  const type = document.getElementById('type').value;
+  const description = document.getElementById('description').value.trim();
+  const outcome = document.getElementById('desiredOutcome').value.trim();
+
+  const date = new Date().toLocaleDateString();
+
+  let header = `Date: ${date}\n`;
+  if(yourName) header += `From: ${yourName}\n`;
+  if(yourEmail) header += `Reply-To: ${yourEmail}\n`;
+  header += `\n`;
+
+  let body = header;
+  body += `To: YouTube Support\nSubject: Report regarding ${channel} (Complaint: ${type})\n\n`;
+  body += `Dear YouTube Support Team,\n\n`;
+  body += `I would like to report the channel ${channel} for the following reason: ${type}.\n\n`;
+  body += `Details:\n`;
+  body += (description ? description + "\n\n" : "(No details provided)\n\n");
+  body += `Requested action: ${outcome || 'Please investigate and take appropriate action.'}\n\n`;
+  if(yourName) body += `Sincerely,\n${yourName}\n`;
+  if(yourEmail) body += `${yourEmail}\n`;
+
+  return body;
+}
+
+function updatePreview(){
+  const p = document.getElementById('preview');
+  p.textContent = buildLetter();
+}
+
+function openMailClient(){
+  const body = buildLetter();
+  // Use a neutral recipients list: point users to official report URL and optionally to YouTube's legal/copyright team
+  const recipients = ['support@youtube.com'];
+  const subject = `Report regarding ${document.getElementById('channel').value || '@weareeramusicbv'}`;
+  const mailto = `mailto:${recipients.join(',')}?subject=${escapeForMailto(subject)}&body=${escapeForMailto(body)}`;
+  window.location.href = mailto;
+}
+
+function downloadText(){
+  const blob = new Blob([buildLetter()],{type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'youtube_report.txt';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function copyToClipboard(){
+  const text = buildLetter();
+  navigator.clipboard.writeText(text).then(()=>{
+    const b = document.getElementById('copy');
+    b.textContent = 'Copied!';
+    setTimeout(()=>b.textContent='Copy to clipboard',1800);
+  }).catch(()=>alert('Copy failed — your browser may block the clipboard.'));
+}
+
+document.getElementById('generate').addEventListener('click',()=>{
+  updatePreview();
+});
+
+document.getElementById('openMail').addEventListener('click',()=>{
+  updatePreview();
+  openMailClient();
+});
+
+document.getElementById('copy').addEventListener('click',copyToClipboard);
+
+document.getElementById('download').addEventListener('click',downloadText);
+
+document.getElementById('gotoReport').addEventListener('click',()=>{
+  window.open('https://support.google.com/youtube/answer/2802027','_blank');
+});
+
+// update preview live when fields change
+['yourName','yourEmail','channel','type','description','desiredOutcome'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{
+    // keep it responsive but not spammy
+    clearTimeout(window._previewTimer);
+    window._previewTimer = setTimeout(updatePreview,400);
+  });
+});
+</script>
+</body>
+</html>
